@@ -118,15 +118,28 @@ filesRouter.post("/", upload.single("file"), async (req, res) => {
     return;
   }
 
+  const errorWarnings = parseResult.warnings.filter((w) => w.level === "error");
+  if (errorWarnings.length > 0) {
+    res.status(400).json({
+      error:
+        "El archivo tiene errores de parseo y no se importó (la data anterior del año queda intacta).",
+      parseErrors: errorWarnings.map((w) => ({
+        programSlug: w.programSlug,
+        segment: w.segment,
+        message: w.message,
+      })),
+    });
+    return;
+  }
+
   const yearDir = path.join(config.excelsDir, String(year));
   await fs.mkdir(yearDir, { recursive: true });
   const safeName = file.originalname.replace(/[^A-Za-z0-9._\- ]/g, "_");
   const storedPath = path.join(yearDir, `${sha.slice(0, 12)}__${safeName}`);
   await fs.writeFile(storedPath, buf);
 
-  const hasErrors = parseResult.warnings.some((w) => w.level === "error");
   const hasWarn = parseResult.warnings.some((w) => w.level === "warning");
-  const status = hasErrors ? "ERROR" : hasWarn ? "WARNING" : "OK";
+  const status = hasWarn ? "WARNING" : "OK";
 
   const txResult = await prisma.$transaction(async (tx) => {
     const previous = await tx.excelFile.findMany({

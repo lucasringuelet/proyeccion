@@ -7,13 +7,13 @@ export const PROGRAMS: ProgramDef[] = [
     slug: "obras_ff11",
     name: "Obras FF 11",
     family: "FAMILIA1",
-    sheetAliases: ["^Obras\\s+\\d{4}\\s+FF\\s*11\\b"],
+    sheetAliases: ["^Obras\\s+(?:\\d{4}\\s+)?FF\\s*11\\b"],
   },
   {
     slug: "obras_ff12",
     name: "Obras FF 12",
     family: "FAMILIA1",
-    sheetAliases: ["^Obras\\s+\\d{4}\\s+FF\\s*12\\b"],
+    sheetAliases: ["^Obras\\s+(?:\\d{4}\\s+)?FF\\s*12\\b"],
   },
   {
     slug: "bid_4416",

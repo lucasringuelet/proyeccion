@@ -41,7 +41,23 @@ export default function Files() {
       }
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.error ?? "Error al procesar archivo");
+      const data = err?.response?.data;
+      const baseMsg = data?.error ?? "Error al procesar archivo";
+      const parseErrors = data?.parseErrors as
+        | Array<{ programSlug?: string; segment?: string; message: string }>
+        | undefined;
+      if (parseErrors && parseErrors.length > 0) {
+        const lines = parseErrors
+          .slice(0, 5)
+          .map((e) => `• [${e.programSlug ?? "?"}] ${e.message}`);
+        const more = parseErrors.length > 5 ? `\n…y ${parseErrors.length - 5} más` : "";
+        toast.error(`${baseMsg}\n\n${lines.join("\n")}${more}`, {
+          duration: 12000,
+          style: { maxWidth: "520px", whiteSpace: "pre-line" },
+        });
+      } else {
+        toast.error(baseMsg);
+      }
     },
   });
 
