@@ -13,7 +13,8 @@ export default function Login() {
   const qc = useQueryClient();
   const [password, setPassword] = useState("");
   const login = useMutation({
-    mutationFn: (pwd: string) => api.post("/auth/login", { password: pwd }),
+    mutationFn: (pwd: string) =>
+      api.post("/auth/login", { password: pwd.trim() }),
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ["auth"] });
       nav("/proyeccion", { replace: true });
@@ -51,6 +52,7 @@ export default function Login() {
                 id="pwd"
                 type="password"
                 autoFocus
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Ingresá la clave compartida"

@@ -14,7 +14,7 @@ authRouter.post("/login", async (req, res) => {
     res.status(400).json({ error: "Cuerpo inválido" });
     return;
   }
-  if (parsed.data.password !== config.appPassword) {
+  if (parsed.data.password.trim() !== config.appPassword.trim()) {
     // Rate-limit naïve: pequeña pausa para mitigar guessing
     await new Promise((r) => setTimeout(r, 600));
     res.status(401).json({ error: "Clave incorrecta" });
