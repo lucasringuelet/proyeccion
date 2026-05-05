@@ -147,6 +147,23 @@ export default function ProgramDetail() {
 
   const [search, setSearch] = useState("");
 
+  // IMPORTANTE: todos los hooks deben ejecutarse antes de cualquier early
+  // return para no romper las Rules of Hooks de React.
+  const filteredObras = useMemo(() => {
+    const list = data?.obras ?? [];
+    if (!search.trim()) return list;
+    const s = search.toLowerCase();
+    return list.filter(
+      (o) =>
+        o.concepto?.toLowerCase().includes(s) ||
+        o.pry?.toLowerCase().includes(s) ||
+        o.cuov?.toLowerCase().includes(s) ||
+        o.expediente?.toLowerCase().includes(s),
+    );
+  }, [data, search]);
+
+  const obrasPager = usePagination(filteredObras, 50);
+
   if (isLoading || !detailParams) {
     return <div className="text-slate-500">Cargando…</div>;
   }
@@ -181,20 +198,6 @@ export default function ProgramDetail() {
     }
     return row;
   });
-
-  // Filtrar obras por búsqueda
-  const filteredObras = data.obras.filter((o) => {
-    if (!search.trim()) return true;
-    const s = search.toLowerCase();
-    return (
-      o.concepto?.toLowerCase().includes(s) ||
-      o.pry?.toLowerCase().includes(s) ||
-      o.cuov?.toLowerCase().includes(s) ||
-      o.expediente?.toLowerCase().includes(s)
-    );
-  });
-
-  const obrasPager = usePagination(filteredObras, 50);
 
   const totalAdjudicado = data.obras.reduce(
     (a, o) => a + (o.montoAdjudicacion ?? 0),
