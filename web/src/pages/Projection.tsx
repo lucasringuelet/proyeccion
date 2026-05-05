@@ -88,7 +88,6 @@ export default function Projection() {
       settings.baseYears && settings.baseYears.length > 0
         ? settings.baseYears
         : availableYears.filter((y) => y !== targetYear).slice(0, 2);
-    if (baseYears.length === 0) return null;
     const segmentSelection =
       settings.segmentSelection && Object.keys(settings.segmentSelection).length
         ? settings.segmentSelection
@@ -135,7 +134,7 @@ export default function Projection() {
 
   // Auto-fetch cuando cambian params
   useEffect(() => {
-    if (!finalParams) return;
+    if (!finalParams || finalParams.baseYears.length === 0) return;
     setError(null);
     api
       .post<ProjectionEnvelope>("/projection", finalParams)
@@ -178,11 +177,20 @@ export default function Projection() {
     return <div className="text-slate-500">Cargando configuración…</div>;
   }
   if (finalParams.baseYears.length === 0) {
+    const onlyOneYear = availableYears.length === 1;
     return (
       <EmptyState
-        title="Falta año base"
-        message="Necesitás al menos un año histórico distinto del target. Configuralo en Configuración."
-        cta={{ to: "/configuracion", label: "Configurar" }}
+        title={onlyOneYear ? "Falta histórico para proyectar" : "Falta año base"}
+        message={
+          onlyOneYear
+            ? `Solo tenés cargado el año ${finalParams.targetYear}. Para proyectar Plan/Esperado necesitás al menos un año histórico adicional. Subí otro Excel desde Archivos.`
+            : "Necesitás al menos un año histórico distinto del target. Configuralo en Configuración."
+        }
+        cta={
+          onlyOneYear
+            ? { to: "/archivos", label: "Ir a Archivos" }
+            : { to: "/configuracion", label: "Configurar" }
+        }
       />
     );
   }
