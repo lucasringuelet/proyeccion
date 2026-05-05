@@ -12,7 +12,7 @@ export const sessionOptions: SessionOptions = {
   cookieOptions: {
     httpOnly: true,
     sameSite: "lax",
-    secure: config.isProduction,
+    secure: config.secureCookies,
     maxAge: 60 * 60 * 12, // 12 horas
   },
 };
