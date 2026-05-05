@@ -23,7 +23,7 @@ export default function Audit() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-slate-900">
+        <h1 className="text-xl sm:text-2xl font-semibold text-slate-900">
           Auditoría y metodología
         </h1>
         <p className="text-sm text-slate-500 mt-1">
@@ -89,7 +89,7 @@ export default function Audit() {
           </p>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-sm tabular border border-slate-200 rounded-md">
+            <table className="w-full text-xs sm:text-sm tabular border border-slate-200 rounded-md">
               <thead className="bg-slate-50 text-xs uppercase text-slate-500">
                 <tr>
                   <th className="px-3 py-2 text-left font-medium">Mes</th>
@@ -622,10 +622,10 @@ SaldoFinal      = saldoActual − TotalProyectado`}
                 ["Saldo Final (obra)", "Saldo Actual − Total Proyectado. Lo que quedaría sin ejecutar al final del año si se respetan los porcentajes ingresados en el modal de export."],
               ].map(([term, desc]) => (
                 <tr key={term} className="border-b border-slate-100 last:border-0">
-                  <td className="px-5 py-2.5 align-top w-48 font-medium text-slate-900">
+                  <td className="px-4 sm:px-5 py-2.5 align-top w-32 sm:w-48 font-medium text-slate-900">
                     {term}
                   </td>
-                  <td className="px-5 py-2.5 align-top text-slate-700">
+                  <td className="px-4 sm:px-5 py-2.5 align-top text-slate-700">
                     {desc}
                   </td>
                 </tr>

@@ -20,7 +20,13 @@ export const CardHeader = ({
   className,
   ...p
 }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn("px-5 py-4 border-b border-slate-100", className)} {...p} />
+  <div
+    className={cn(
+      "px-4 py-3 sm:px-5 sm:py-4 border-b border-slate-100",
+      className,
+    )}
+    {...p}
+  />
 );
 
 export const CardTitle = ({
@@ -44,7 +50,7 @@ export const CardBody = ({
   className,
   ...p
 }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn("px-5 py-4", className)} {...p} />
+  <div className={cn("px-4 py-3 sm:px-5 sm:py-4", className)} {...p} />
 );
 
 export const CardFooter = ({
@@ -52,7 +58,10 @@ export const CardFooter = ({
   ...p
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
-    className={cn("px-5 py-3 border-t border-slate-100 bg-slate-50/50", className)}
+    className={cn(
+      "px-4 py-3 sm:px-5 border-t border-slate-100 bg-slate-50/50",
+      className,
+    )}
     {...p}
   />
 );

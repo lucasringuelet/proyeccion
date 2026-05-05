@@ -25,7 +25,7 @@ export default function FileAuditView() {
         <ArrowLeft className="h-4 w-4" /> Archivos
       </Link>
 
-      <h1 className="text-2xl font-semibold text-slate-900">
+      <h1 className="text-xl sm:text-2xl font-semibold text-slate-900 break-words">
         Auditoría: {data.originalName}
       </h1>
       <p className="text-sm text-slate-500 mt-1">
@@ -92,43 +92,74 @@ export default function FileAuditView() {
         <CardHeader>
           <CardTitle>Datos extraídos por programa</CardTitle>
         </CardHeader>
-        <CardBody className="p-0 overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="text-left text-xs uppercase text-slate-500 border-b border-slate-100 bg-slate-50">
-              <tr>
-                <th className="px-4 py-2 font-medium">Programa</th>
-                <th className="px-4 py-2 font-medium">Segmento</th>
-                <th className="px-4 py-2 font-medium">Solapa</th>
-                <th className="px-4 py-2 font-medium">Fila</th>
-                <th className="px-4 py-2 font-medium text-right">Crédito Definitivo</th>
-                <th className="px-4 py-2 font-medium text-right">Gastado YTD</th>
-                <th className="px-4 py-2 font-medium text-right">Saldos</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.extractions.map((e) => (
-                <tr key={`${e.programSlug}-${e.segment}`} className="border-b border-slate-50 hover:bg-slate-50/60">
-                  <td className="px-4 py-2 font-medium text-slate-900">
-                    {e.programName}
-                  </td>
-                  <td className="px-4 py-2">
-                    <Badge tone={e.segment === "RENTA" ? "info" : e.segment === "PRESTAMO" ? "warning" : "neutral"}>
-                      {e.segment}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-2 text-slate-500">{e.source.sheet}</td>
-                  <td className="px-4 py-2 text-slate-500 tabular">
-                    {(e.source as any).totalRow >= 0
-                      ? `R${(e.source as any).totalRow + 1}`
-                      : "—"}
-                  </td>
-                  <td className="px-4 py-2 text-right tabular">{fmtMoney(e.creditoDefinitivo)}</td>
-                  <td className="px-4 py-2 text-right tabular">{fmtMoney(e.gastadoAcumulado)}</td>
-                  <td className="px-4 py-2 text-right tabular">{fmtMoney(e.saldos)}</td>
+        <CardBody className="p-0">
+          {/* Desktop: tabla */}
+          <div className="hidden sm:block overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="text-left text-xs uppercase text-slate-500 border-b border-slate-100 bg-slate-50">
+                <tr>
+                  <th className="px-4 py-2 font-medium">Programa</th>
+                  <th className="px-4 py-2 font-medium">Segmento</th>
+                  <th className="px-4 py-2 font-medium">Solapa</th>
+                  <th className="px-4 py-2 font-medium">Fila</th>
+                  <th className="px-4 py-2 font-medium text-right">Crédito Definitivo</th>
+                  <th className="px-4 py-2 font-medium text-right">Gastado YTD</th>
+                  <th className="px-4 py-2 font-medium text-right">Saldos</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {data.extractions.map((e) => (
+                  <tr key={`${e.programSlug}-${e.segment}`} className="border-b border-slate-50 hover:bg-slate-50/60">
+                    <td className="px-4 py-2 font-medium text-slate-900">
+                      {e.programName}
+                    </td>
+                    <td className="px-4 py-2">
+                      <Badge tone={e.segment === "RENTA" ? "info" : e.segment === "PRESTAMO" ? "warning" : "neutral"}>
+                        {e.segment}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-2 text-slate-500">{e.source.sheet}</td>
+                    <td className="px-4 py-2 text-slate-500 tabular">
+                      {(e.source as any).totalRow >= 0
+                        ? `R${(e.source as any).totalRow + 1}`
+                        : "—"}
+                    </td>
+                    <td className="px-4 py-2 text-right tabular">{fmtMoney(e.creditoDefinitivo)}</td>
+                    <td className="px-4 py-2 text-right tabular">{fmtMoney(e.gastadoAcumulado)}</td>
+                    <td className="px-4 py-2 text-right tabular">{fmtMoney(e.saldos)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile: cards apiladas */}
+          <div className="sm:hidden divide-y divide-slate-100">
+            {data.extractions.map((e) => (
+              <div key={`${e.programSlug}-${e.segment}-card`} className="p-4 space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="font-medium text-slate-900">{e.programName}</div>
+                  <Badge tone={e.segment === "RENTA" ? "info" : e.segment === "PRESTAMO" ? "warning" : "neutral"}>
+                    {e.segment}
+                  </Badge>
+                </div>
+                <div className="text-xs text-slate-500">
+                  Solapa: <span className="text-slate-700">{e.source.sheet}</span>
+                  {(e.source as any).totalRow >= 0 && (
+                    <span className="ml-2 tabular">· R{(e.source as any).totalRow + 1}</span>
+                  )}
+                </div>
+                <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-sm pt-1">
+                  <dt className="text-slate-500">Crédito Def.</dt>
+                  <dd className="text-right tabular">{fmtMoney(e.creditoDefinitivo)}</dd>
+                  <dt className="text-slate-500">Gastado YTD</dt>
+                  <dd className="text-right tabular">{fmtMoney(e.gastadoAcumulado)}</dd>
+                  <dt className="text-slate-500">Saldos</dt>
+                  <dd className="text-right tabular">{fmtMoney(e.saldos)}</dd>
+                </dl>
+              </div>
+            ))}
+          </div>
         </CardBody>
       </Card>
 
@@ -137,7 +168,7 @@ export default function FileAuditView() {
           <CardTitle>Detalle mensual</CardTitle>
         </CardHeader>
         <CardBody className="p-0 overflow-x-auto">
-          <table className="w-full text-sm tabular">
+          <table className="w-full text-xs sm:text-sm tabular">
             <thead className="text-left text-xs uppercase text-slate-500 border-b border-slate-100 bg-slate-50">
               <tr>
                 <th className="px-3 py-2 font-medium sticky left-0 bg-slate-50">Programa / Segmento</th>

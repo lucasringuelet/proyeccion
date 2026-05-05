@@ -23,6 +23,8 @@ import {
 import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
+import { Pagination } from "@/components/ui/Pagination";
+import { usePagination } from "@/lib/hooks";
 import { ArrowLeft, Search, FileText } from "lucide-react";
 import {
   api,
@@ -192,6 +194,8 @@ export default function ProgramDetail() {
     );
   });
 
+  const obrasPager = usePagination(filteredObras, 50);
+
   const totalAdjudicado = data.obras.reduce(
     (a, o) => a + (o.montoAdjudicacion ?? 0),
     0,
@@ -209,8 +213,8 @@ export default function ProgramDetail() {
           <ArrowLeft className="h-4 w-4" /> Volver a Proyección
         </Link>
         <div className="flex items-start justify-between gap-4 mt-3">
-          <div>
-            <h1 className="text-2xl font-semibold text-slate-900">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl font-semibold text-slate-900 break-words">
               {data.programName}
             </h1>
             <p className="text-sm text-slate-500 mt-1">
@@ -315,7 +319,7 @@ export default function ProgramDetail() {
           </CardDescription>
         </CardHeader>
         <CardBody>
-          <div className="h-[360px]">
+          <div className="h-[240px] sm:h-[360px]">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
@@ -480,7 +484,7 @@ export default function ProgramDetail() {
       {/* === Obras === */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
               <CardTitle>Obras del programa</CardTitle>
               <CardDescription>
@@ -488,7 +492,7 @@ export default function ProgramDetail() {
                 Σ adjudicado: {fmtMoney(totalAdjudicado)}
               </CardDescription>
             </div>
-            <div className="relative w-72">
+            <div className="relative w-full sm:w-72">
               <Search className="h-4 w-4 absolute left-2.5 top-2.5 text-slate-400 pointer-events-none" />
               <Input
                 placeholder="Buscar por concepto, PRY, CUOV…"
@@ -499,7 +503,7 @@ export default function ProgramDetail() {
             </div>
           </div>
         </CardHeader>
-        <CardBody className="p-0 overflow-x-auto">
+        <CardBody className="p-0">
           {filteredObras.length === 0 ? (
             <div className="p-10 text-center text-slate-500 text-sm">
               {data.obras.length === 0
@@ -507,93 +511,177 @@ export default function ProgramDetail() {
                 : "No hay obras que coincidan con la búsqueda."}
             </div>
           ) : (
-            <table className="w-full text-sm tabular">
-              <thead className="text-xs uppercase text-slate-500 border-b border-slate-100 bg-slate-50">
-                <tr>
-                  <th className="px-3 py-2 font-medium text-left">PRY</th>
-                  <th className="px-3 py-2 font-medium text-left">CUOV</th>
-                  <th className="px-3 py-2 font-medium text-left">Concepto</th>
-                  {data.segment === "TOTAL" && (
-                    <th className="px-3 py-2 font-medium text-left">Sub-FF</th>
-                  )}
-                  <th className="px-3 py-2 font-medium text-left">Expediente</th>
-                  <th className="px-3 py-2 font-medium text-right">Adjudicación</th>
-                  <th className="px-3 py-2 font-medium text-right">Crédito original</th>
-                  <th className="px-3 py-2 font-medium text-right">Crédito def.</th>
-                  <th className="px-3 py-2 font-medium text-right">Gastado</th>
-                  <th className="px-3 py-2 font-medium text-right">Saldo</th>
-                  <th className="px-3 py-2 font-medium text-right">% ejec.</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredObras.map((o) => {
+            <>
+              {/* Desktop: tabla */}
+              <div className="hidden sm:block overflow-x-auto">
+                <table className="w-full text-sm tabular">
+                  <thead className="text-xs uppercase text-slate-500 border-b border-slate-100 bg-slate-50">
+                    <tr>
+                      <th className="px-3 py-2 font-medium text-left">PRY</th>
+                      <th className="px-3 py-2 font-medium text-left">CUOV</th>
+                      <th className="px-3 py-2 font-medium text-left">Concepto</th>
+                      {data.segment === "TOTAL" && (
+                        <th className="px-3 py-2 font-medium text-left">Sub-FF</th>
+                      )}
+                      <th className="px-3 py-2 font-medium text-left">Expediente</th>
+                      <th className="px-3 py-2 font-medium text-right">Adjudicación</th>
+                      <th className="px-3 py-2 font-medium text-right">Crédito original</th>
+                      <th className="px-3 py-2 font-medium text-right">Crédito def.</th>
+                      <th className="px-3 py-2 font-medium text-right">Gastado</th>
+                      <th className="px-3 py-2 font-medium text-right">Saldo</th>
+                      <th className="px-3 py-2 font-medium text-right">% ejec.</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {obrasPager.paginated.map((o) => {
+                      const pct =
+                        o.creditoDefinitivo > 0
+                          ? o.gastadoAcumulado / o.creditoDefinitivo
+                          : 0;
+                      return (
+                        <tr
+                          key={`${o.segmentSource}-${o.rowIdx}`}
+                          className="border-b border-slate-50 hover:bg-slate-50/60"
+                        >
+                          <td className="px-3 py-2 text-slate-600">{o.pry ?? "—"}</td>
+                          <td className="px-3 py-2 text-slate-600">{o.cuov ?? "—"}</td>
+                          <td className="px-3 py-2 text-slate-900 max-w-md">
+                            <div className="truncate" title={o.concepto}>
+                              {o.concepto || "—"}
+                            </div>
+                          </td>
+                          {data.segment === "TOTAL" && (
+                            <td className="px-3 py-2">
+                              <Badge
+                                tone={o.segmentSource === "RENTA" ? "info" : "warning"}
+                              >
+                                {o.segmentSource === "RENTA" ? "Renta" : "Préstamo"}
+                              </Badge>
+                            </td>
+                          )}
+                          <td className="px-3 py-2 text-slate-500 text-xs">
+                            <div className="flex items-center gap-1">
+                              <FileText className="h-3 w-3" />
+                              <span className="truncate max-w-32" title={o.expediente ?? ""}>
+                                {o.expediente ?? "—"}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-3 py-2 text-right text-slate-600">
+                            {o.montoAdjudicacion ? fmtMoneyCompact(o.montoAdjudicacion) : "—"}
+                          </td>
+                          <td className="px-3 py-2 text-right text-slate-600">
+                            {o.creditoOriginal ? fmtMoneyCompact(o.creditoOriginal) : "—"}
+                          </td>
+                          <td className="px-3 py-2 text-right font-medium text-slate-900">
+                            {fmtMoneyCompact(o.creditoDefinitivo)}
+                          </td>
+                          <td className="px-3 py-2 text-right text-slate-600">
+                            {fmtMoneyCompact(o.gastadoAcumulado)}
+                          </td>
+                          <td className="px-3 py-2 text-right text-slate-600">
+                            {fmtMoneyCompact(o.saldos)}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            <span
+                              className={cn(
+                                "inline-flex items-center font-medium",
+                                pct >= 0.8
+                                  ? "text-emerald-600"
+                                  : pct >= 0.4
+                                    ? "text-amber-600"
+                                    : "text-slate-500",
+                              )}
+                            >
+                              {fmtPct(pct)}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile: cards apiladas */}
+              <div className="sm:hidden divide-y divide-slate-100">
+                {obrasPager.paginated.map((o) => {
                   const pct =
                     o.creditoDefinitivo > 0
                       ? o.gastadoAcumulado / o.creditoDefinitivo
                       : 0;
                   return (
-                    <tr
-                      key={`${o.segmentSource}-${o.rowIdx}`}
-                      className="border-b border-slate-50 hover:bg-slate-50/60"
+                    <div
+                      key={`${o.segmentSource}-${o.rowIdx}-mobcard`}
+                      className="p-4 space-y-2"
                     >
-                      <td className="px-3 py-2 text-slate-600">{o.pry ?? "—"}</td>
-                      <td className="px-3 py-2 text-slate-600">{o.cuov ?? "—"}</td>
-                      <td className="px-3 py-2 text-slate-900 max-w-md">
-                        <div className="truncate" title={o.concepto}>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="text-sm font-medium text-slate-900 break-words flex-1">
                           {o.concepto || "—"}
                         </div>
-                      </td>
-                      {data.segment === "TOTAL" && (
-                        <td className="px-3 py-2">
+                        {data.segment === "TOTAL" && (
                           <Badge
                             tone={o.segmentSource === "RENTA" ? "info" : "warning"}
                           >
                             {o.segmentSource === "RENTA" ? "Renta" : "Préstamo"}
                           </Badge>
-                        </td>
-                      )}
-                      <td className="px-3 py-2 text-slate-500 text-xs">
-                        <div className="flex items-center gap-1">
-                          <FileText className="h-3 w-3" />
-                          <span className="truncate max-w-32" title={o.expediente ?? ""}>
-                            {o.expediente ?? "—"}
+                        )}
+                      </div>
+                      <div className="text-xs text-slate-500 tabular flex flex-wrap gap-x-3">
+                        {o.pry && <span>PRY {o.pry}</span>}
+                        {o.cuov && <span>CUOV {o.cuov}</span>}
+                        {o.expediente && (
+                          <span className="flex items-center gap-1">
+                            <FileText className="h-3 w-3" />
+                            {o.expediente}
                           </span>
-                        </div>
-                      </td>
-                      <td className="px-3 py-2 text-right text-slate-600">
-                        {o.montoAdjudicacion ? fmtMoneyCompact(o.montoAdjudicacion) : "—"}
-                      </td>
-                      <td className="px-3 py-2 text-right text-slate-600">
-                        {o.creditoOriginal ? fmtMoneyCompact(o.creditoOriginal) : "—"}
-                      </td>
-                      <td className="px-3 py-2 text-right font-medium text-slate-900">
-                        {fmtMoneyCompact(o.creditoDefinitivo)}
-                      </td>
-                      <td className="px-3 py-2 text-right text-slate-600">
-                        {fmtMoneyCompact(o.gastadoAcumulado)}
-                      </td>
-                      <td className="px-3 py-2 text-right text-slate-600">
-                        {fmtMoneyCompact(o.saldos)}
-                      </td>
-                      <td className="px-3 py-2 text-right">
-                        <span
-                          className={cn(
-                            "inline-flex items-center font-medium",
-                            pct >= 0.8
-                              ? "text-emerald-600"
-                              : pct >= 0.4
-                                ? "text-amber-600"
-                                : "text-slate-500",
-                          )}
-                        >
-                          {fmtPct(pct)}
-                        </span>
-                      </td>
-                    </tr>
+                        )}
+                      </div>
+                      <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-sm pt-1">
+                        <dt className="text-slate-500">Crédito def.</dt>
+                        <dd className="text-right tabular font-medium text-slate-900">
+                          {fmtMoneyCompact(o.creditoDefinitivo)}
+                        </dd>
+                        <dt className="text-slate-500">Gastado</dt>
+                        <dd className="text-right tabular text-slate-700">
+                          {fmtMoneyCompact(o.gastadoAcumulado)}
+                        </dd>
+                        <dt className="text-slate-500">Saldo</dt>
+                        <dd className="text-right tabular text-slate-700">
+                          {fmtMoneyCompact(o.saldos)}
+                        </dd>
+                        <dt className="text-slate-500">% ejecución</dt>
+                        <dd className="text-right">
+                          <span
+                            className={cn(
+                              "tabular font-medium",
+                              pct >= 0.8
+                                ? "text-emerald-600"
+                                : pct >= 0.4
+                                  ? "text-amber-600"
+                                  : "text-slate-500",
+                            )}
+                          >
+                            {fmtPct(pct)}
+                          </span>
+                        </dd>
+                      </dl>
+                    </div>
                   );
                 })}
-              </tbody>
-            </table>
+              </div>
+
+              <Pagination
+                page={obrasPager.page}
+                pageSize={obrasPager.pageSize}
+                total={obrasPager.total}
+                totalPages={obrasPager.totalPages}
+                startIndex={obrasPager.startIndex}
+                endIndex={obrasPager.endIndex}
+                onPageChange={obrasPager.setPage}
+                onPageSizeChange={obrasPager.setPageSize}
+              />
+            </>
           )}
         </CardBody>
       </Card>

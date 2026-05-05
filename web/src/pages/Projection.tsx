@@ -239,9 +239,9 @@ export default function Projection() {
           setExportModalOpen(false);
         }}
       />
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">
+          <h1 className="text-xl sm:text-2xl font-semibold text-slate-900">
             Proyección {finalParams.targetYear}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
@@ -252,19 +252,20 @@ export default function Projection() {
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <Link to="/configuracion">
-            <Button variant="outline" size="md">
+          <Link to="/configuracion" className="flex-1 sm:flex-none">
+            <Button variant="outline" size="md" className="w-full sm:w-auto">
               <SettingsIcon className="h-4 w-4" />
-              Configurar
+              <span className="hidden xs:inline sm:inline">Configurar</span>
             </Button>
           </Link>
           <Button
             size="md"
             onClick={() => setExportModalOpen(true)}
             disabled={exportXlsx.isPending}
+            className="flex-1 sm:flex-none"
           >
             <Download className="h-4 w-4" />
-            Exportar Excel
+            <span className="whitespace-nowrap">Exportar Excel</span>
           </Button>
         </div>
       </div>
@@ -363,7 +364,7 @@ export default function Projection() {
             </CardDescription>
           </CardHeader>
           <CardBody>
-            <div className="h-[320px]">
+            <div className="h-[240px] sm:h-[320px]">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
@@ -504,73 +505,130 @@ export default function Projection() {
           <CardTitle>Mensual por programa</CardTitle>
           <CardDescription>Plan en pesos absolutos.</CardDescription>
         </CardHeader>
-        <CardBody className="p-0 overflow-x-auto">
-          <table className="w-full text-sm tabular">
-            <thead className="text-left text-xs uppercase text-slate-500 border-b border-slate-100 bg-slate-50">
-              <tr>
-                <th className="px-3 py-2 font-medium sticky left-0 bg-slate-50">
-                  Programa
-                </th>
-                {MONTHS_ES.map((m, i) => (
-                  <th
-                    key={m}
-                    className={
-                      "px-3 py-2 font-medium text-right " +
-                      (i + 1 === finalParams.currentMonth
-                        ? "text-brand-700"
-                        : "")
-                    }
-                  >
-                    {m}
+        <CardBody className="p-0">
+          {/* Desktop: tabla mensual completa */}
+          <div className="hidden sm:block overflow-x-auto">
+            <table className="w-full text-sm tabular">
+              <thead className="text-left text-xs uppercase text-slate-500 border-b border-slate-100 bg-slate-50">
+                <tr>
+                  <th className="px-3 py-2 font-medium sticky left-0 bg-slate-50">
+                    Programa
                   </th>
-                ))}
-                <th className="px-3 py-2 font-medium text-right">Σ</th>
-              </tr>
-            </thead>
-            <tbody>
-              {envelope.perProgram.map((p) => {
-                const sum = p.plan.reduce((a, b) => a + b, 0);
-                return (
-                  <tr
-                    key={`${p.programSlug}-${p.segment}-row`}
-                    className="border-b border-slate-50 hover:bg-slate-50/60"
-                  >
-                    <td className="px-3 py-2 font-medium text-slate-700 sticky left-0 bg-white">
-                      {p.programName}{" "}
-                      {p.segment !== "SOLE" && (
-                        <span className="text-slate-400 text-xs">/ {p.segment}</span>
-                      )}
+                  {MONTHS_ES.map((m, i) => (
+                    <th
+                      key={m}
+                      className={
+                        "px-3 py-2 font-medium text-right " +
+                        (i + 1 === finalParams.currentMonth
+                          ? "text-brand-700"
+                          : "")
+                      }
+                    >
+                      {m}
+                    </th>
+                  ))}
+                  <th className="px-3 py-2 font-medium text-right">Σ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {envelope.perProgram.map((p) => {
+                  const sum = p.plan.reduce((a, b) => a + b, 0);
+                  return (
+                    <tr
+                      key={`${p.programSlug}-${p.segment}-row`}
+                      className="border-b border-slate-50 hover:bg-slate-50/60"
+                    >
+                      <td className="px-3 py-2 font-medium text-slate-700 sticky left-0 bg-white">
+                        {p.programName}{" "}
+                        {p.segment !== "SOLE" && (
+                          <span className="text-slate-400 text-xs">/ {p.segment}</span>
+                        )}
+                      </td>
+                      {p.plan.map((v, i) => (
+                        <td
+                          key={i}
+                          className={
+                            "px-3 py-2 text-right text-slate-600 " +
+                            (i < finalParams.currentMonth ? "" : "text-brand-700")
+                          }
+                        >
+                          {v > 0 ? fmtMoneyCompact(v).replace("$ ", "") : "—"}
+                        </td>
+                      ))}
+                      <td className="px-3 py-2 text-right font-medium text-slate-900">
+                        {fmtMoneyCompact(sum).replace("$ ", "")}
+                      </td>
+                    </tr>
+                  );
+                })}
+                <tr className="border-t-2 border-slate-200 font-semibold bg-slate-50/60">
+                  <td className="px-3 py-2 sticky left-0 bg-slate-50/60">Total</td>
+                  {c.plan.map((v, i) => (
+                    <td key={i} className="px-3 py-2 text-right">
+                      {fmtMoneyCompact(v).replace("$ ", "")}
                     </td>
+                  ))}
+                  <td className="px-3 py-2 text-right">
+                    {fmtMoneyCompact(c.plan.reduce((a, b) => a + b, 0)).replace("$ ", "")}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile: cards apiladas con meses en grid 3x4 */}
+          <div className="sm:hidden divide-y divide-slate-100">
+            {envelope.perProgram.map((p) => {
+              const sum = p.plan.reduce((a, b) => a + b, 0);
+              return (
+                <div key={`${p.programSlug}-${p.segment}-mobcard`} className="p-3">
+                  <div className="flex items-baseline justify-between gap-2 mb-2">
+                    <div className="font-medium text-sm text-slate-900">
+                      {p.programName}
+                      {p.segment !== "SOLE" && (
+                        <span className="text-slate-400 text-xs ml-1">/ {p.segment}</span>
+                      )}
+                    </div>
+                    <div className="text-sm font-semibold tabular text-slate-900">
+                      {fmtMoneyCompact(sum).replace("$ ", "")}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-x-2 gap-y-1 text-xs tabular">
                     {p.plan.map((v, i) => (
-                      <td
+                      <div
                         key={i}
                         className={
-                          "px-3 py-2 text-right text-slate-600 " +
-                          (i < finalParams.currentMonth ? "" : "text-brand-700")
+                          "flex justify-between " +
+                          (i < finalParams.currentMonth
+                            ? "text-slate-600"
+                            : "text-brand-700")
                         }
                       >
-                        {v > 0 ? fmtMoneyCompact(v).replace("$ ", "") : "—"}
-                      </td>
+                        <span className="text-slate-400 w-8">{MONTHS_ES[i]}</span>
+                        <span>{v > 0 ? fmtMoneyCompact(v).replace("$ ", "") : "—"}</span>
+                      </div>
                     ))}
-                    <td className="px-3 py-2 text-right font-medium text-slate-900">
-                      {fmtMoneyCompact(sum).replace("$ ", "")}
-                    </td>
-                  </tr>
-                );
-              })}
-              <tr className="border-t-2 border-slate-200 font-semibold bg-slate-50/60">
-                <td className="px-3 py-2 sticky left-0 bg-slate-50/60">Total</td>
-                {c.plan.map((v, i) => (
-                  <td key={i} className="px-3 py-2 text-right">
-                    {fmtMoneyCompact(v).replace("$ ", "")}
-                  </td>
-                ))}
-                <td className="px-3 py-2 text-right">
+                  </div>
+                </div>
+              );
+            })}
+            <div className="p-3 bg-slate-50/60">
+              <div className="flex items-baseline justify-between gap-2 mb-2">
+                <div className="font-semibold text-sm text-slate-900">Total consolidado</div>
+                <div className="text-sm font-semibold tabular">
                   {fmtMoneyCompact(c.plan.reduce((a, b) => a + b, 0)).replace("$ ", "")}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-x-2 gap-y-1 text-xs tabular">
+                {c.plan.map((v, i) => (
+                  <div key={i} className="flex justify-between">
+                    <span className="text-slate-400 w-8">{MONTHS_ES[i]}</span>
+                    <span>{fmtMoneyCompact(v).replace("$ ", "")}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </CardBody>
       </Card>
     </div>
@@ -609,12 +667,12 @@ function KpiTile({
             ? "border-brand-200 bg-brand-50/60"
             : "border-slate-200 bg-white";
   return (
-    <div className={`rounded-xl border ${toneCls} px-5 py-4 shadow-card min-w-0`}>
+    <div className={`rounded-xl border ${toneCls} px-4 py-3 sm:px-5 sm:py-4 shadow-card min-w-0`}>
       <div className="text-xs uppercase tracking-wider text-slate-500 flex items-center">
         {label}
         {tooltip && <InfoTooltip align={tooltipAlign}>{tooltip}</InfoTooltip>}
       </div>
-      <div className="text-2xl 2xl:text-xl font-semibold text-slate-900 mt-1 tabular whitespace-nowrap">
+      <div className="text-lg sm:text-xl lg:text-2xl 2xl:text-xl font-semibold text-slate-900 mt-1 tabular whitespace-nowrap">
         {value}
       </div>
       {hint && <div className="text-xs text-slate-500 mt-1">{hint}</div>}

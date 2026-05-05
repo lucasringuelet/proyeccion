@@ -117,70 +117,126 @@ export default function Files() {
               No hay archivos cargados todavía.
             </div>
           ) : (
-            <table className="w-full text-sm">
-              <thead className="text-left text-xs uppercase text-slate-500 border-b border-slate-100">
-                <tr>
-                  <th className="px-5 py-2.5 font-medium">Año</th>
-                  <th className="px-5 py-2.5 font-medium">Archivo</th>
-                  <th className="px-5 py-2.5 font-medium">Tamaño</th>
-                  <th className="px-5 py-2.5 font-medium">Subido</th>
-                  <th className="px-5 py-2.5 font-medium">Estado</th>
-                  <th className="px-5 py-2.5 font-medium text-right">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {files.map((f) => (
-                  <tr key={f.id} className="border-b border-slate-50 hover:bg-slate-50">
-                    <td className="px-5 py-3 font-medium tabular">{f.year}</td>
-                    <td className="px-5 py-3 text-slate-700">
-                      <div className="flex items-center gap-2">
-                        <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
-                        {f.originalName}
-                      </div>
-                    </td>
-                    <td className="px-5 py-3 tabular text-slate-500">
-                      {fmtMoneyCompact(f.sizeBytes).replace("$ ", "")} B
-                    </td>
-                    <td className="px-5 py-3 text-slate-500 tabular">
-                      {new Date(f.uploadedAt).toLocaleString("es-AR")}
-                    </td>
-                    <td className="px-5 py-3">
-                      {f.status === "OK" ? (
-                        <Badge tone="ok">OK</Badge>
-                      ) : f.status === "WARNING" ? (
-                        <Badge tone="warning">
-                          <AlertTriangle className="h-3 w-3 mr-1" />
-                          Avisos
-                        </Badge>
-                      ) : (
-                        <Badge tone="danger">Error</Badge>
-                      )}
-                    </td>
-                    <td className="px-5 py-3 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Link to={`/archivos/${f.id}`}>
-                          <Button variant="ghost" size="sm">
-                            <Eye className="h-4 w-4" />
-                            Auditoría
-                          </Button>
-                        </Link>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            if (confirm(`Eliminar ${f.originalName}?`)) {
-                              del.mutate(f.id);
-                            }
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        </Button>
-                      </div>
-                    </td>
+            <>
+              {/* Desktop: tabla */}
+              <table className="hidden sm:table w-full text-sm">
+                <thead className="text-left text-xs uppercase text-slate-500 border-b border-slate-100">
+                  <tr>
+                    <th className="px-5 py-2.5 font-medium">Año</th>
+                    <th className="px-5 py-2.5 font-medium">Archivo</th>
+                    <th className="px-5 py-2.5 font-medium">Tamaño</th>
+                    <th className="px-5 py-2.5 font-medium">Subido</th>
+                    <th className="px-5 py-2.5 font-medium">Estado</th>
+                    <th className="px-5 py-2.5 font-medium text-right">Acciones</th>
                   </tr>
+                </thead>
+                <tbody>
+                  {files.map((f) => (
+                    <tr key={f.id} className="border-b border-slate-50 hover:bg-slate-50">
+                      <td className="px-5 py-3 font-medium tabular">{f.year}</td>
+                      <td className="px-5 py-3 text-slate-700">
+                        <div className="flex items-center gap-2">
+                          <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+                          {f.originalName}
+                        </div>
+                      </td>
+                      <td className="px-5 py-3 tabular text-slate-500">
+                        {fmtMoneyCompact(f.sizeBytes).replace("$ ", "")} B
+                      </td>
+                      <td className="px-5 py-3 text-slate-500 tabular">
+                        {new Date(f.uploadedAt).toLocaleString("es-AR")}
+                      </td>
+                      <td className="px-5 py-3">
+                        {f.status === "OK" ? (
+                          <Badge tone="ok">OK</Badge>
+                        ) : f.status === "WARNING" ? (
+                          <Badge tone="warning">
+                            <AlertTriangle className="h-3 w-3 mr-1" />
+                            Avisos
+                          </Badge>
+                        ) : (
+                          <Badge tone="danger">Error</Badge>
+                        )}
+                      </td>
+                      <td className="px-5 py-3 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Link to={`/archivos/${f.id}`}>
+                            <Button variant="ghost" size="sm">
+                              <Eye className="h-4 w-4" />
+                              Auditoría
+                            </Button>
+                          </Link>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              if (confirm(`Eliminar ${f.originalName}?`)) {
+                                del.mutate(f.id);
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {/* Mobile: cards apiladas */}
+              <div className="sm:hidden divide-y divide-slate-100">
+                {files.map((f) => (
+                  <div key={f.id} className="p-4 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-start gap-2 min-w-0 flex-1">
+                        <FileSpreadsheet className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-medium text-slate-900 break-words">
+                            {f.originalName}
+                          </div>
+                          <div className="text-xs text-slate-500 mt-0.5 tabular">
+                            {f.year} · {fmtMoneyCompact(f.sizeBytes).replace("$ ", "")} B ·{" "}
+                            {new Date(f.uploadedAt).toLocaleDateString("es-AR")}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="shrink-0">
+                        {f.status === "OK" ? (
+                          <Badge tone="ok">OK</Badge>
+                        ) : f.status === "WARNING" ? (
+                          <Badge tone="warning">
+                            <AlertTriangle className="h-3 w-3 mr-1" />
+                            Avisos
+                          </Badge>
+                        ) : (
+                          <Badge tone="danger">Error</Badge>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-end gap-2 pt-1">
+                      <Link to={`/archivos/${f.id}`} className="flex-1">
+                        <Button variant="outline" size="sm" className="w-full">
+                          <Eye className="h-4 w-4" />
+                          Auditoría
+                        </Button>
+                      </Link>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          if (confirm(`Eliminar ${f.originalName}?`)) {
+                            del.mutate(f.id);
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </Button>
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            </>
           )}
         </CardBody>
       </Card>

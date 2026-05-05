@@ -51,18 +51,20 @@ export function Modal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-2 sm:p-4"
       onClick={onClose}
     >
       <div
         className={cn(
-          "bg-white rounded-xl shadow-2xl w-full max-h-[90vh] flex flex-col overflow-hidden",
+          "bg-white rounded-xl shadow-2xl w-full max-h-[95vh] sm:max-h-[90vh] flex flex-col overflow-hidden",
           MAX_WIDTH_CLASS[maxWidth],
         )}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
-          <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
+        <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-200">
+          <h2 className="text-base sm:text-lg font-semibold text-slate-900">
+            {title}
+          </h2>
           <button
             type="button"
             onClick={onClose}
@@ -72,9 +74,11 @@ export function Modal({
             <X className="h-5 w-5" />
           </button>
         </div>
-        <div className="flex-1 overflow-auto px-6 py-5">{children}</div>
+        <div className="flex-1 overflow-auto px-4 py-4 sm:px-6 sm:py-5">
+          {children}
+        </div>
         {footer && (
-          <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-end gap-2">
+          <div className="px-4 py-3 sm:px-6 sm:py-4 border-t border-slate-200 bg-slate-50 flex flex-wrap items-center justify-end gap-2">
             {footer}
           </div>
         )}

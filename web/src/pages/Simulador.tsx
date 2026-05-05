@@ -250,7 +250,7 @@ export default function Simulador() {
       <div>
         <div className="flex items-center gap-2 mb-1">
           <FlaskConical className="h-5 w-5 text-brand-600" />
-          <h1 className="text-2xl font-semibold text-slate-900">
+          <h1 className="text-xl sm:text-2xl font-semibold text-slate-900">
             Simulador de obra
           </h1>
         </div>
@@ -264,8 +264,8 @@ export default function Simulador() {
       {/* Selector de año + obra */}
       <Card>
         <CardBody className="space-y-4">
-          <div className="flex flex-wrap items-end gap-4">
-            <div className="w-32">
+          <div className="flex flex-wrap items-end gap-3 sm:gap-4">
+            <div className="w-full sm:w-32">
               <Label>Año</Label>
               <Select
                 className="w-full mt-1"
@@ -284,7 +284,7 @@ export default function Simulador() {
               </Select>
             </div>
 
-            <div className="flex-1 min-w-[280px]" ref={pickerRef}>
+            <div className="flex-1 w-full sm:min-w-[280px]" ref={pickerRef}>
               <Label>Obra</Label>
               <div className="relative mt-1">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400 pointer-events-none" />
@@ -505,10 +505,10 @@ export default function Simulador() {
                 <table className="w-full text-sm">
                   <thead className="text-left text-xs uppercase text-slate-500 border-b border-slate-100 bg-slate-50">
                     <tr>
-                      <th className="px-4 py-2 font-medium">Mes</th>
-                      <th className="px-4 py-2 font-medium text-right w-32">%</th>
-                      <th className="px-4 py-2 font-medium text-right">Monto</th>
-                      <th className="px-4 py-2 font-medium w-32"></th>
+                      <th className="px-3 sm:px-4 py-2 font-medium">Mes</th>
+                      <th className="px-2 sm:px-4 py-2 font-medium text-right w-28 sm:w-32">%</th>
+                      <th className="px-2 sm:px-4 py-2 font-medium text-right">Monto</th>
+                      <th className="hidden sm:table-cell px-4 py-2 font-medium w-32"></th>
                       <th className="px-2 py-2 font-medium w-8"></th>
                     </tr>
                   </thead>
@@ -527,7 +527,7 @@ export default function Simulador() {
                             isPast && "bg-slate-50/40 text-slate-500",
                           )}
                         >
-                          <td className="px-4 py-2 font-medium">
+                          <td className="px-3 sm:px-4 py-2 font-medium">
                             {m}
                             {isPast && (
                               <span className="ml-2 text-xs text-slate-400">
@@ -535,7 +535,7 @@ export default function Simulador() {
                               </span>
                             )}
                           </td>
-                          <td className="px-4 py-2 text-right">
+                          <td className="px-2 sm:px-4 py-2 text-right">
                             {isPast ? (
                               <span className="tabular text-slate-500">
                                 {pct.toFixed(2)}%
@@ -549,7 +549,7 @@ export default function Simulador() {
                                   max="100"
                                   value={pct}
                                   onChange={(e) => setPctAt(i, e.target.value)}
-                                  className="h-8 w-24 text-right pr-6 rounded-md border border-slate-300 text-sm tabular focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500"
+                                  className="h-8 w-20 sm:w-24 text-right pr-6 rounded-md border border-slate-300 text-sm tabular focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500"
                                 />
                                 <span className="absolute right-2 text-slate-400 text-xs pointer-events-none">
                                   %
@@ -557,10 +557,10 @@ export default function Simulador() {
                               </div>
                             )}
                           </td>
-                          <td className="px-4 py-2 text-right tabular text-slate-700">
+                          <td className="px-2 sm:px-4 py-2 text-right tabular text-slate-700">
                             {amt > 0 ? fmtMoney(amt) : "—"}
                           </td>
-                          <td className="px-4 py-2">
+                          <td className="hidden sm:table-cell px-4 py-2">
                             <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
                               <div
                                 className={cn(
@@ -587,14 +587,15 @@ export default function Simulador() {
                       );
                     })}
                     <tr className="border-t-2 border-slate-200 font-semibold bg-slate-50">
-                      <td className="px-4 py-2.5">Total</td>
-                      <td className="px-4 py-2.5 text-right tabular">
+                      <td className="px-3 sm:px-4 py-2.5">Total</td>
+                      <td className="px-2 sm:px-4 py-2.5 text-right tabular">
                         {totalPctAsignado.toFixed(2)}%
                       </td>
-                      <td className="px-4 py-2.5 text-right tabular">
+                      <td className="px-2 sm:px-4 py-2.5 text-right tabular">
                         {fmtMoney(totalSimulado)}
                       </td>
-                      <td colSpan={2}></td>
+                      <td className="hidden sm:table-cell" colSpan={1}></td>
+                      <td></td>
                     </tr>
                   </tbody>
                 </table>
@@ -676,7 +677,7 @@ export default function Simulador() {
               </CardDescription>
             </CardHeader>
             <CardBody>
-              <div className="h-[320px]">
+              <div className="h-[240px] sm:h-[320px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
@@ -750,12 +751,12 @@ function SimTile({
             ? "border-brand-200 bg-brand-50/60"
             : "border-slate-200 bg-white";
   return (
-    <div className={cn("rounded-xl border px-5 py-4 shadow-card min-w-0", cls)}>
+    <div className={cn("rounded-xl border px-4 py-3 sm:px-5 sm:py-4 shadow-card min-w-0", cls)}>
       <div className="text-xs uppercase tracking-wider text-slate-500 flex items-center">
         {label}
         {tooltip && <InfoTooltip align={tooltipAlign}>{tooltip}</InfoTooltip>}
       </div>
-      <div className="text-2xl 2xl:text-xl font-semibold text-slate-900 mt-1 tabular whitespace-nowrap">
+      <div className="text-lg sm:text-xl lg:text-2xl 2xl:text-xl font-semibold text-slate-900 mt-1 tabular whitespace-nowrap">
         {value}
       </div>
       {hint && <div className="text-xs text-slate-500 mt-1">{hint}</div>}

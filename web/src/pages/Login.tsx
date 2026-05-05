@@ -22,9 +22,9 @@ export default function Login() {
   });
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-200 p-6">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-200 p-4 sm:p-6">
       <Card className="w-full max-w-md">
-        <CardBody className="p-8">
+        <CardBody className="p-6 sm:p-8">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 rounded-lg bg-brand-600 text-white flex items-center justify-center">
               <Lock className="h-5 w-5" />

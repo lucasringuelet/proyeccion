@@ -133,15 +133,15 @@ export default function Config() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Configuración</h1>
+          <h1 className="text-xl sm:text-2xl font-semibold text-slate-900">Configuración</h1>
           <p className="text-sm text-slate-500 mt-1">
             Definí qué año proyectar, qué años usar como base histórica y qué
             segmento de cada programa va al consolidado.
           </p>
         </div>
-        <Button onClick={save} disabled={persist.isPending}>
+        <Button onClick={save} disabled={persist.isPending} className="self-start sm:self-auto">
           {persist.isPending ? "Guardando…" : "Guardar"}
         </Button>
       </div>
@@ -242,7 +242,8 @@ export default function Config() {
           </CardDescription>
         </CardHeader>
         <CardBody className="p-0">
-          <table className="w-full text-sm">
+          {/* Desktop: tabla */}
+          <table className="hidden sm:table w-full text-sm">
             <thead className="text-left text-xs uppercase text-slate-500 border-b border-slate-100">
               <tr>
                 <th className="px-5 py-2.5 font-medium">Programa</th>
@@ -321,6 +322,71 @@ export default function Config() {
               })}
             </tbody>
           </table>
+
+          {/* Mobile: cards apiladas */}
+          <div className="sm:hidden divide-y divide-slate-100">
+            {programs.map((p) => {
+              const sel = state.segmentSelection[p.slug] ?? [];
+              const hasTotal = sel.includes("TOTAL");
+              const hasRP = sel.includes("RENTA") || sel.includes("PRESTAMO");
+              const hasSole = sel.includes("SOLE");
+              return (
+                <div key={p.slug} className="p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="font-medium text-slate-900">{p.name}</div>
+                    {p.family === "FAMILIA1" ? (
+                      <Badge tone="neutral">Sin desglose</Badge>
+                    ) : (
+                      <Badge tone="info">Con desglose</Badge>
+                    )}
+                  </div>
+                  {p.family === "FAMILIA1" ? (
+                    <label className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={hasSole}
+                        onChange={() =>
+                          setSegment(p.slug, hasSole ? "OFF" : "RENTA_PRESTAMO")
+                        }
+                        className="rounded border-slate-300 text-brand-600"
+                      />
+                      Incluir
+                    </label>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          type="radio"
+                          name={`seg-mob-${p.slug}`}
+                          checked={hasRP && !hasTotal}
+                          onChange={() => setSegment(p.slug, "RENTA_PRESTAMO")}
+                        />
+                        Renta + Préstamo
+                      </label>
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          type="radio"
+                          name={`seg-mob-${p.slug}`}
+                          checked={hasTotal}
+                          onChange={() => setSegment(p.slug, "TOTAL")}
+                        />
+                        Total
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-slate-500">
+                        <input
+                          type="radio"
+                          name={`seg-mob-${p.slug}`}
+                          checked={!hasRP && !hasTotal}
+                          onChange={() => setSegment(p.slug, "OFF")}
+                        />
+                        No incluir
+                      </label>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </CardBody>
       </Card>
     </div>

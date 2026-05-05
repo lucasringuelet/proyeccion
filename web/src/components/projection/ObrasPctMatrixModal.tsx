@@ -184,7 +184,8 @@ export function ObrasPctMatrixModal({
             es decay: cada mes el % se aplica sobre lo que quedó tras el mes anterior.
             Valores &gt; 100% se saturan al 100%.
           </p>
-          <div className="overflow-auto border border-slate-200 rounded-lg">
+          {/* Desktop: grilla tradicional */}
+          <div className="hidden md:block overflow-auto border border-slate-200 rounded-lg">
             <table className="text-sm">
               <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
                 <tr>
@@ -251,6 +252,88 @@ export function ObrasPctMatrixModal({
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile/tablet: cards con accordion */}
+          <div className="md:hidden space-y-2">
+            {rows.length === 0 && (
+              <div className="p-4 text-center text-slate-500 text-sm border border-slate-200 rounded-lg">
+                No hay fuentes de financiamiento seleccionadas. Configurá segmentos en la pantalla de Proyección.
+              </div>
+            )}
+            {rows.map((r) => {
+              const rowSum = futureMonthIdx.reduce(
+                (a, m) => a + (matrix[r.key]?.[m] ?? 0),
+                0,
+              );
+              return (
+                <details
+                  key={r.key}
+                  className="border border-slate-200 rounded-lg group"
+                >
+                  <summary className="cursor-pointer list-none px-3 py-3 flex items-center justify-between gap-2 hover:bg-slate-50">
+                    <div className="min-w-0">
+                      <div className="font-medium text-slate-900 text-sm">
+                        {r.programName}
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        {SEGMENT_LABEL[r.segment]}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-slate-500 shrink-0">
+                      <span className="tabular">Σ {rowSum.toFixed(1)}%</span>
+                      <span className="text-slate-400 group-open:rotate-90 transition-transform">
+                        ▶
+                      </span>
+                    </div>
+                  </summary>
+                  <div className="px-3 pb-3 pt-2 space-y-2 border-t border-slate-100">
+                    <div className="grid grid-cols-2 gap-2">
+                      {futureMonthIdx.map((m) => (
+                        <label key={m} className="text-xs">
+                          <span className="text-slate-500 block mb-0.5">
+                            {MONTH_NAMES[m]}
+                          </span>
+                          <div className="relative">
+                            <input
+                              type="number"
+                              min={0}
+                              step={0.5}
+                              value={matrix[r.key]?.[m] ?? 0}
+                              onChange={(e) =>
+                                setCell(r.key, m, Number(e.target.value))
+                              }
+                              className="h-9 w-full rounded border border-slate-300 px-2 pr-6 text-sm tabular text-right focus:outline-none focus:ring-2 focus:ring-brand-500/40"
+                            />
+                            <span className="absolute right-2 top-2 text-slate-400 text-xs pointer-events-none">
+                              %
+                            </span>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                    <div className="flex gap-2 pt-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => fillRowUniform(r.key)}
+                      >
+                        Uniforme
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => zeroRow(r.key)}
+                      >
+                        Cero
+                      </Button>
+                    </div>
+                  </div>
+                </details>
+              );
+            })}
           </div>
         </>
       )}
