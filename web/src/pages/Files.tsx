@@ -28,17 +28,40 @@ export default function Files() {
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ["files"] });
       const replacedName = data?.replaced?.[0]?.originalName as string | undefined;
-      const warnCount = data?.warnings?.length ?? 0;
+      const warnings = (data?.warnings ?? []) as Array<{
+        programSlug?: string;
+        segment?: string;
+        level: "info" | "warning" | "error";
+        message: string;
+      }>;
+      const warnCount = warnings.length;
+
       if (data?.deduped) {
         toast.success("Archivo ya estaba cargado (mismo contenido).");
-      } else if (replacedName) {
-        const suffix = warnCount > 0 ? ` (con ${warnCount} aviso${warnCount === 1 ? "" : "s"})` : "";
-        toast.success(`Se reemplazó "${replacedName}"${suffix}.`);
-      } else if (warnCount > 0) {
-        toast(`Procesado con ${warnCount} aviso(s).`, { icon: "⚠️" });
-      } else {
-        toast.success("Archivo procesado correctamente.");
+        return;
       }
+
+      const baseMsg = replacedName
+        ? `Se reemplazó "${replacedName}"`
+        : "Archivo procesado correctamente";
+
+      if (warnCount === 0) {
+        toast.success(`${baseMsg}.`);
+        return;
+      }
+
+      const lines = warnings.slice(0, 5).map((w) => {
+        const tag = w.programSlug
+          ? `[${w.programSlug}${w.segment ? "/" + w.segment : ""}]`
+          : "[—]";
+        return `• ${tag} ${w.message}`;
+      });
+      const more = warnCount > 5 ? `\n…y ${warnCount - 5} más (ver Auditoría)` : "";
+      toast(`${baseMsg} (${warnCount} aviso${warnCount === 1 ? "" : "s"}):\n\n${lines.join("\n")}${more}`, {
+        icon: "⚠️",
+        duration: 12000,
+        style: { maxWidth: "560px", whiteSpace: "pre-line" },
+      });
     },
     onError: (err: any) => {
       const data = err?.response?.data;
