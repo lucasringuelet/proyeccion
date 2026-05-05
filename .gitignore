@@ -1,0 +1,23 @@
+node_modules/
+dist/
+build/
+*.log
+.DS_Store
+.env
+.env.local
+
+# Backend
+backend/data/
+backend/prisma/migrations/dev.db*
+
+# Frontend
+web/dist/
+*.tsbuildinfo
+
+# Claude Code session data (no compartir)
+.claude/
+
+# Editors
+.vscode/
+.idea/
+*.swp

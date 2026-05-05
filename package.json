@@ -1,0 +1,27 @@
+{
+  "name": "proyeccion-vialidad",
+  "version": "0.1.0",
+  "private": true,
+  "description": "App de proyección de gastos para la Dirección Provincial de Vialidad",
+  "workspaces": [
+    "backend",
+    "web"
+  ],
+  "scripts": {
+    "dev": "npm-run-all --parallel dev:backend dev:web",
+    "dev:backend": "npm --workspace backend run dev",
+    "dev:web": "npm --workspace web run dev",
+    "build": "npm --workspace backend run build && npm --workspace web run build",
+    "start": "npm --workspace backend run start",
+    "test": "npm --workspace backend run test",
+    "prisma:migrate": "npm --workspace backend run prisma:migrate",
+    "prisma:generate": "npm --workspace backend run prisma:generate",
+    "seed": "npm --workspace backend run seed"
+  },
+  "devDependencies": {
+    "npm-run-all": "^4.1.5"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

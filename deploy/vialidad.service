@@ -1,0 +1,18 @@
+[Unit]
+Description=Proyeccion Vialidad PBA
+After=network.target
+
+[Service]
+Type=simple
+User=vialidad
+WorkingDirectory=/opt/vialidad
+EnvironmentFile=/opt/vialidad/backend/.env
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node /opt/vialidad/backend/dist/index.js
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

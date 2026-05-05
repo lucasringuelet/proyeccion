@@ -1,0 +1,124 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Catálogo estático de los 6 programas que la app procesa.
+// Se popula con `prisma/seed.ts`.
+model Program {
+  slug         String   @id            // obras_ff11, bid_4416, etc.
+  name         String                  // "Obras FF 11", "BID 4416", etc.
+  family       String                  // "FAMILIA1" (sin desglose) | "FAMILIA2" (con desglose)
+  order        Int                     // orden de display en la UI
+  sheetAliases String                  // JSON array de regex stringificadas
+
+  yearData ProgramYearData[]
+}
+
+// Un .xls subido por el usuario, asociado a un año.
+model ExcelFile {
+  id              String   @id @default(cuid())
+  year            Int      @unique       // un solo archivo por año (subir uno nuevo reemplaza al anterior)
+  originalName    String
+  storedPath      String                // ruta absoluta o relativa a DATA_DIR/excels
+  sha256          String   @unique
+  sizeBytes       Int
+  uploadedAt      DateTime @default(now())
+  status          String                // "OK" | "WARNING" | "ERROR"
+  parserAuditJson String                // JSON: warnings, mapping de filas/cols por programa
+  notes           String?
+
+  yearData ProgramYearData[]
+}
+
+// Datos extraídos del Excel para un programa, segmentados.
+// Para Familia 1 hay 1 fila por (excelFile, program) con segment="SOLE".
+// Para Familia 2 hay 3 filas: TOTAL (agregado), RENTA, PRESTAMO.
+model ProgramYearData {
+  id                 String   @id @default(cuid())
+  excelFileId        String
+  programSlug        String
+  segment            String                // "SOLE" | "TOTAL" | "RENTA" | "PRESTAMO"
+
+  creditoOriginal    Float?
+  creditoDefinitivo  Float
+  gastadoAcumulado   Float
+  saldos             Float
+
+  // Ejecución mensual (en pesos absolutos)
+  m01 Float
+  m02 Float
+  m03 Float
+  m04 Float
+  m05 Float
+  m06 Float
+  m07 Float
+  m08 Float
+  m09 Float
+  m10 Float
+  m11 Float
+  m12 Float
+
+  // Trazabilidad: { sheetName, rowIdx, columns: { creditoDefinitivo: 12, m01: 14, ... } }
+  sourceJson String
+
+  excelFile ExcelFile @relation(fields: [excelFileId], references: [id], onDelete: Cascade)
+  program   Program   @relation(fields: [programSlug], references: [slug])
+  obras     Obra[]
+
+  @@unique([excelFileId, programSlug, segment])
+  @@index([programSlug])
+}
+
+// Una obra concreta dentro de un programa-segmento de un año.
+model Obra {
+  id                 String   @id @default(cuid())
+  yearDataId         String
+  rowIdx             Int                    // fila en el Excel original (0-based)
+  expediente         String?
+  montoAdjudicacion  Float?
+  pry                String?
+  cuov               String?
+  concepto           String
+
+  creditoOriginal    Float?
+  creditoDefinitivo  Float
+  gastadoAcumulado   Float
+  saldos             Float
+
+  m01 Float
+  m02 Float
+  m03 Float
+  m04 Float
+  m05 Float
+  m06 Float
+  m07 Float
+  m08 Float
+  m09 Float
+  m10 Float
+  m11 Float
+  m12 Float
+
+  yearData ProgramYearData @relation(fields: [yearDataId], references: [id], onDelete: Cascade)
+
+  @@index([yearDataId])
+}
+
+// Pares clave-valor para preferencias de la app (single-tenant).
+model Setting {
+  key   String @id
+  value String        // JSON
+}
+
+model AuditEntry {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  action      String                // "LOGIN" | "UPLOAD_FILE" | "DELETE_FILE" | "EXPORT" | "SNAPSHOT_SAVE" | ...
+  description String
+
+  @@index([createdAt])
+}
