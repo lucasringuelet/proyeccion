@@ -1,5 +1,9 @@
 # Proyección de Gastos — Dirección Provincial de Vialidad
 
+> 📘 **¿Buscás cómo desplegar / actualizar / administrar la app en producción?**
+> Mirá [`OPERACIONES.md`](./OPERACIONES.md) — incluye infra, paths, contraseñas,
+> backups, troubleshooting y cheatsheet de comandos para el server.
+
 App web interna que automatiza el cálculo mensual de la proyección presupuestaria
 que el equipo de Vialidad PBA hoy hace a mano sobre planillas Excel.
 
