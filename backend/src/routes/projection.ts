@@ -20,6 +20,9 @@ const ExportBody = ProjectionBody.extend({
   obrasPctMatrix: z
     .record(z.string(), z.array(z.number().min(0).max(500)).length(12))
     .optional(),
+  obrasDescuentoPct: z
+    .record(z.string(), z.number().min(0).max(100))
+    .optional(),
 });
 
 projectionRouter.post("/", async (req, res, next) => {
@@ -43,13 +46,14 @@ projectionRouter.post("/export", async (req, res, next) => {
       res.status(400).json({ error: "Body inválido" });
       return;
     }
-    const { obrasPctMatrix, ...projectionParams } = parsed.data;
+    const { obrasPctMatrix, obrasDescuentoPct, ...projectionParams } = parsed.data;
     const env = await buildProjection(projectionParams);
     const obrasRows = await projectObras({
       targetYear: projectionParams.targetYear,
       currentMonth: projectionParams.currentMonth,
       segmentSelection: projectionParams.segmentSelection,
       pctMatrix: obrasPctMatrix,
+      descuentoPctByFuente: obrasDescuentoPct,
     });
     const buf = buildExportXlsx(env, {
       obrasRows,

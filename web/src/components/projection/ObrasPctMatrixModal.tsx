@@ -23,6 +23,7 @@ const SEGMENT_ORDER: Record<Segment, number> = {
 };
 
 export type ObrasPctMatrix = Record<string, number[]>;
+export type ObrasDescuentoPct = Record<string, number>;
 
 interface FuenteRow {
   key: string;
@@ -38,7 +39,7 @@ interface Props {
   currentMonth: number;
   programs: Program[];
   segmentSelection: Record<string, Segment[]>;
-  onSubmit: (matrix: ObrasPctMatrix) => void;
+  onSubmit: (matrix: ObrasPctMatrix, descuentos: ObrasDescuentoPct) => void;
   submitting?: boolean;
 }
 
@@ -100,6 +101,7 @@ export function ObrasPctMatrixModal({
   );
 
   const [matrix, setMatrix] = useState<ObrasPctMatrix>(() => emptyMatrix(rows));
+  const [descuentos, setDescuentos] = useState<ObrasDescuentoPct>({});
 
   useEffect(() => {
     setMatrix((prev) => {
@@ -109,7 +111,24 @@ export function ObrasPctMatrixModal({
       }
       return next;
     });
+    setDescuentos((prev) => {
+      const next: ObrasDescuentoPct = {};
+      for (const r of rows) {
+        if (prev[r.key] != null) next[r.key] = prev[r.key];
+      }
+      return next;
+    });
   }, [rows]);
+
+  function setDescuento(key: string, value: number) {
+    setDescuentos((prev) => {
+      if (!Number.isFinite(value) || value <= 0) {
+        const { [key]: _omit, ...rest } = prev;
+        return rest;
+      }
+      return { ...prev, [key]: Math.min(100, Math.max(0, value)) };
+    });
+  }
 
   const futureMonthIdx = useMemo(() => {
     const arr: number[] = [];
@@ -165,7 +184,7 @@ export function ObrasPctMatrixModal({
           <Button variant="outline" onClick={onClose} disabled={submitting}>
             Cancelar
           </Button>
-          <Button onClick={() => onSubmit(matrix)} disabled={submitting}>
+          <Button onClick={() => onSubmit(matrix, descuentos)} disabled={submitting}>
             {submitting ? "Generando…" : "Exportar"}
           </Button>
         </>
@@ -182,7 +201,9 @@ export function ObrasPctMatrixModal({
             Para cada fuente de financiamiento, definí qué porcentaje del{" "}
             <strong>saldo remanente</strong> consume la obra en cada mes futuro. El cálculo
             es decay: cada mes el % se aplica sobre lo que quedó tras el mes anterior.
-            Valores &gt; 100% se saturan al 100%.
+            Valores &gt; 100% se saturan al 100%. Opcionalmente, podés indicar un{" "}
+            <strong>descuento %</strong> por fuente: reduce el saldo base de todas las obras
+            de esa fuente antes de proyectar (ej. 10 % = solo se proyecta el 90 % del saldo).
           </p>
           {/* Desktop: grilla tradicional */}
           <div className="hidden md:block overflow-auto border border-slate-200 rounded-lg">
@@ -191,6 +212,9 @@ export function ObrasPctMatrixModal({
                 <tr>
                   <th className="sticky left-0 bg-slate-50 px-3 py-2 font-medium border-r border-slate-200 min-w-[220px]">
                     Programa / Segmento
+                  </th>
+                  <th className="px-2 py-2 font-medium text-center min-w-[100px]">
+                    Descuento %
                   </th>
                   {futureMonthIdx.map((m) => (
                     <th key={m} className="px-2 py-2 font-medium text-center min-w-[80px]">
@@ -210,6 +234,21 @@ export function ObrasPctMatrixModal({
                       <span className="text-slate-400 ml-1">
                         / {SEGMENT_LABEL[r.segment]}
                       </span>
+                    </td>
+                    <td className="px-1 py-1">
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        step={0.5}
+                        placeholder="0"
+                        value={descuentos[r.key] ?? ""}
+                        onChange={(e) =>
+                          setDescuento(r.key, Number(e.target.value))
+                        }
+                        className="h-8 w-full rounded border border-slate-300 px-2 text-sm tabular text-right focus:outline-none focus:ring-2 focus:ring-brand-500/40"
+                        title="Descuento aplicado al saldo base de la fuente antes de proyectar"
+                      />
                     </td>
                     {futureMonthIdx.map((m) => (
                       <td key={m} className="px-1 py-1">
@@ -245,7 +284,7 @@ export function ObrasPctMatrixModal({
                 ))}
                 {rows.length === 0 && (
                   <tr>
-                    <td className="px-3 py-6 text-center text-slate-500" colSpan={futureMonthIdx.length + 2}>
+                    <td className="px-3 py-6 text-center text-slate-500" colSpan={futureMonthIdx.length + 3}>
                       No hay fuentes de financiamiento seleccionadas. Configurá segmentos en la pantalla de Proyección.
                     </td>
                   </tr>
@@ -266,6 +305,7 @@ export function ObrasPctMatrixModal({
                 (a, m) => a + (matrix[r.key]?.[m] ?? 0),
                 0,
               );
+              const desc = descuentos[r.key];
               return (
                 <details
                   key={r.key}
@@ -281,6 +321,11 @@ export function ObrasPctMatrixModal({
                       </div>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-slate-500 shrink-0">
+                      {desc != null && desc > 0 && (
+                        <span className="tabular text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">
+                          −{desc}%
+                        </span>
+                      )}
                       <span className="tabular">Σ {rowSum.toFixed(1)}%</span>
                       <span className="text-slate-400 group-open:rotate-90 transition-transform">
                         ▶
@@ -288,6 +333,28 @@ export function ObrasPctMatrixModal({
                     </div>
                   </summary>
                   <div className="px-3 pb-3 pt-2 space-y-2 border-t border-slate-100">
+                    <label className="text-xs block">
+                      <span className="text-slate-500 block mb-0.5">
+                        Descuento % sobre el saldo de la fuente (opcional)
+                      </span>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          min={0}
+                          max={100}
+                          step={0.5}
+                          placeholder="0"
+                          value={descuentos[r.key] ?? ""}
+                          onChange={(e) =>
+                            setDescuento(r.key, Number(e.target.value))
+                          }
+                          className="h-9 w-full rounded border border-slate-300 px-2 pr-6 text-sm tabular text-right focus:outline-none focus:ring-2 focus:ring-brand-500/40"
+                        />
+                        <span className="absolute right-2 top-2 text-slate-400 text-xs pointer-events-none">
+                          %
+                        </span>
+                      </div>
+                    </label>
                     <div className="grid grid-cols-2 gap-2">
                       {futureMonthIdx.map((m) => (
                         <label key={m} className="text-xs">

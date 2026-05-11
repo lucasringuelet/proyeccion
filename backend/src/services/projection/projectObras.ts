@@ -14,6 +14,10 @@ export interface ObraProjectionRow {
   creditoDefinitivo: number;
   gastadoYTD: number;
   saldoActual: number;
+  /** % de descuento aplicado al saldo de la fuente antes de proyectar (0..100). */
+  descuentoPct: number;
+  /** Saldo efectivamente proyectable de la obra = saldoActual × (1 − descuentoPct/100). */
+  saldoProyectable: number;
   /** length 12, índice 0-based. Meses pasados (< currentMonth) siempre 0. */
   proyMonths: number[];
   totalProyectado: number;
@@ -32,6 +36,12 @@ export interface ProjectObrasArgs {
    * Si la entrada falta, se asume 0% en todos los meses.
    */
   pctMatrix?: Record<string, number[]>;
+  /**
+   * % de descuento opcional por fuente (0..100). Reduce el saldo base de cada
+   * obra de esa fuente antes del decay mensual.
+   * key = `${programSlug}__${segment}`.
+   */
+  descuentoPctByFuente?: Record<string, number>;
 }
 
 const SEGMENT_ORDER: Record<Segment, number> = {
@@ -68,7 +78,13 @@ function expandSelectedSegments(selected: Segment[]): Set<Segment> {
 export async function projectObras(
   args: ProjectObrasArgs,
 ): Promise<ObraProjectionRow[]> {
-  const { targetYear, currentMonth, segmentSelection, pctMatrix } = args;
+  const {
+    targetYear,
+    currentMonth,
+    segmentSelection,
+    pctMatrix,
+    descuentoPctByFuente,
+  } = args;
 
   const programs = await prisma.program.findMany({ orderBy: { order: "asc" } });
   const programByslug = new Map(programs.map((p) => [p.slug, p]));
@@ -92,10 +108,14 @@ export async function projectObras(
 
     const fuenteKey = `${yd.programSlug}__${yd.segment}`;
     const pctRow = pctMatrix?.[fuenteKey];
+    const descuentoPctRaw = descuentoPctByFuente?.[fuenteKey] ?? 0;
+    const descuentoPct = Math.min(100, Math.max(0, Number.isFinite(descuentoPctRaw) ? descuentoPctRaw : 0));
+    const descuentoFactor = 1 - descuentoPct / 100;
 
     for (const obra of yd.obras) {
       const proyMonths = new Array<number>(12).fill(0);
-      let saldo = obra.saldos;
+      const saldoProyectable = Math.max(0, obra.saldos * descuentoFactor);
+      let saldo = saldoProyectable;
 
       for (let m = currentMonth + 1; m <= 12; m++) {
         const pctRaw = pctRow?.[m - 1] ?? 0;
@@ -121,6 +141,8 @@ export async function projectObras(
         creditoDefinitivo: obra.creditoDefinitivo,
         gastadoYTD: obra.gastadoAcumulado,
         saldoActual: obra.saldos,
+        descuentoPct,
+        saldoProyectable,
         proyMonths,
         totalProyectado,
         saldoFinal,

@@ -29,6 +29,7 @@ import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import {
   ObrasPctMatrixModal,
   type ObrasPctMatrix,
+  type ObrasDescuentoPct,
 } from "@/components/projection/ObrasPctMatrixModal";
 import { Download, Settings as SettingsIcon, ArrowRight } from "lucide-react";
 import {
@@ -147,9 +148,16 @@ export default function Projection() {
   const [exportModalOpen, setExportModalOpen] = useState(false);
 
   const exportXlsx = useMutation({
-    mutationFn: async (args: { pctMatrix: ObrasPctMatrix }) => {
+    mutationFn: async (args: {
+      pctMatrix: ObrasPctMatrix;
+      descuentos: ObrasDescuentoPct;
+    }) => {
       if (!finalParams) return;
-      const body = { ...finalParams, obrasPctMatrix: args.pctMatrix };
+      const body = {
+        ...finalParams,
+        obrasPctMatrix: args.pctMatrix,
+        obrasDescuentoPct: args.descuentos,
+      };
       const res = await api.post("/projection/export", body, {
         responseType: "blob",
       });
@@ -242,8 +250,8 @@ export default function Projection() {
         programs={programs}
         segmentSelection={finalParams.segmentSelection}
         submitting={exportXlsx.isPending}
-        onSubmit={(matrix) => {
-          exportXlsx.mutate({ pctMatrix: matrix });
+        onSubmit={(matrix, descuentos) => {
+          exportXlsx.mutate({ pctMatrix: matrix, descuentos });
           setExportModalOpen(false);
         }}
       />
