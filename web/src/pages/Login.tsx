@@ -15,8 +15,8 @@ export default function Login() {
   const login = useMutation({
     mutationFn: (pwd: string) =>
       api.post("/auth/login", { password: pwd.trim() }),
-    onSuccess: async () => {
-      await qc.invalidateQueries({ queryKey: ["auth"] });
+    onSuccess: () => {
+      qc.setQueryData(["auth"], { authenticated: true });
       nav("/proyeccion", { replace: true });
     },
     onError: () => toast.error("Clave incorrecta"),
