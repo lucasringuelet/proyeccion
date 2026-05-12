@@ -14,6 +14,17 @@ const SEGMENT_LABEL: Record<string, string> = {
   PRESTAMO: "Préstamo",
 };
 
+function applyMoneyFmt(ws: XLSX.WorkSheet): void {
+  const range = XLSX.utils.decode_range(ws["!ref"] ?? "A1");
+  for (let R = range.s.r; R <= range.e.r; R++) {
+    for (let C = range.s.c; C <= range.e.c; C++) {
+      const addr = XLSX.utils.encode_cell({ r: R, c: C });
+      const cell = ws[addr];
+      if (cell && cell.t === "n") cell.z = "#,##0.00";
+    }
+  }
+}
+
 function fmtPct(n: number): string {
   if (!Number.isFinite(n)) return "0%";
   return `${(n * 100).toFixed(1)}%`;
@@ -53,6 +64,7 @@ export function buildExportXlsx(
     ["Esperado", ...env.consolidated.esperado],
   ];
   const wsResumen = XLSX.utils.aoa_to_sheet(resumenAOA);
+  applyMoneyFmt(wsResumen);
   XLSX.utils.book_append_sheet(wb, wsResumen, "Resumen");
 
   // Hoja 2 — Detalle Plan por programa × mes
@@ -72,6 +84,7 @@ export function buildExportXlsx(
     ]);
   }
   const wsPlan = XLSX.utils.aoa_to_sheet(planAOA);
+  applyMoneyFmt(wsPlan);
   XLSX.utils.book_append_sheet(wb, wsPlan, "Plan");
 
   // Hoja 3 — Detalle Esperado por programa × mes
@@ -91,6 +104,7 @@ export function buildExportXlsx(
     ]);
   }
   const wsEsp = XLSX.utils.aoa_to_sheet(espAOA);
+  applyMoneyFmt(wsEsp);
   XLSX.utils.book_append_sheet(wb, wsEsp, "Esperado");
 
   // Hoja 4 — Real (datos reales del año target)
@@ -108,6 +122,7 @@ export function buildExportXlsx(
     ]);
   }
   const wsReal = XLSX.utils.aoa_to_sheet(realAOA);
+  applyMoneyFmt(wsReal);
   XLSX.utils.book_append_sheet(wb, wsReal, "Real");
 
   // Hoja 5 — Obras (proyección configurable mes a mes sobre saldo remanente)
@@ -151,6 +166,7 @@ export function buildExportXlsx(
     ]);
   }
   const wsObras = XLSX.utils.aoa_to_sheet(obrasAOA);
+  applyMoneyFmt(wsObras);
   XLSX.utils.book_append_sheet(wb, wsObras, "Obras");
 
   // Hoja 6 — Resumen por fuente de financiamiento
@@ -206,6 +222,7 @@ export function buildExportXlsx(
     ]);
   }
   const wsPorFuente = XLSX.utils.aoa_to_sheet(porFuenteAOA);
+  applyMoneyFmt(wsPorFuente);
   XLSX.utils.book_append_sheet(wb, wsPorFuente, "Por Fuente");
 
   const out = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
