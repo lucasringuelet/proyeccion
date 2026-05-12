@@ -115,14 +115,14 @@ export async function projectObras(
     for (const obra of yd.obras) {
       const proyMonths = new Array<number>(12).fill(0);
       const saldoProyectable = Math.max(0, obra.saldos * descuentoFactor);
-      let saldo = saldoProyectable;
+      let remaining = saldoProyectable;
 
       for (let m = currentMonth + 1; m <= 12; m++) {
         const pctRaw = pctRow?.[m - 1] ?? 0;
         const pct = clamp01(pctRaw / 100);
-        const gasto = saldo * pct;
+        const gasto = Math.min(saldoProyectable * pct, remaining);
         proyMonths[m - 1] = gasto;
-        saldo = Math.max(0, saldo - gasto);
+        remaining = Math.max(0, remaining - gasto);
       }
 
       const totalProyectado = proyMonths.reduce((a, b) => a + b, 0);

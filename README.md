@@ -27,9 +27,9 @@ métrica clave:
 
 Además, el botón "Exportar Excel" abre un modal donde el usuario configura,
 por fuente de financiamiento (programa+segmento) y por mes futuro, un % de
-consumo. El export resultante incluye una hoja **"Obras"** con la proyección
-mensual obra por obra, calculada por **decay multiplicativo sobre el saldo
-remanente** (cada mes consume % × lo que quedó del mes anterior).
+consumo. El export resultante incluye una hoja **"Obras"** con la proyección mensual obra
+por obra, y una hoja **"Por Fuente"** con el resumen agregado por fuente de
+financiamiento.
 
 ---
 
@@ -198,9 +198,9 @@ proyeccion-vialidad/
 │   │   └── services/
 │   │       ├── parser/               Excel → datos normalizados + audit trail
 │   │       ├── projection/           Motor de Plan/Esperado (funciones puras)
-│   │       │                         + projectObras (decay configurable por obra)
-│   │       └── export/               Generación de .xlsx (5 hojas: Resumen, Plan,
-│   │                                  Esperado, Real, Obras)
+│   │       │                         + projectObras (proyección proporcional al saldo base por obra)
+│   │       └── export/               Generación de .xlsx (6 hojas: Resumen, Plan,
+│   │                                  Esperado, Real, Obras, Por Fuente)
 │   ├── prisma/
 │   │   ├── schema.prisma             Schema (ExcelFile, Program, etc.)
 │   │   └── seed.ts                   Carga los 6 programas
@@ -250,7 +250,7 @@ Todos los endpoints excepto `/api/auth/*` requieren cookie de sesión válida.
 | GET    | `/api/settings`             | preferencias del usuario                                                   |
 | PUT    | `/api/settings`             | `{ key, value }`                                                           |
 | POST   | `/api/projection`           | `{ targetYear, baseYears, currentMonth, segmentSelection }` → envelope     |
-| POST   | `/api/projection/export`    | mismo body + `obrasPctMatrix?: Record<string, number[12]>` → descarga `.xlsx` con 5 hojas (Resumen, Plan, Esperado, Real, Obras) |
+| POST   | `/api/projection/export`    | mismo body + `obrasPctMatrix?: Record<string, number[12]>` → descarga `.xlsx` con 6 hojas (Resumen, Plan, Esperado, Real, Obras, Por Fuente) |
 | GET    | `/api/snapshots`            | lista de snapshots                                                         |
 | POST   | `/api/snapshots`            | `{ label, params }` guarda                                                 |
 | GET    | `/api/snapshots/:id`        | detalle                                                                    |
@@ -300,27 +300,28 @@ Plan y Esperado se calculan automáticamente a partir del histórico, pero
 proyectar obra por obra, el botón "Exportar Excel" abre un modal donde el
 usuario configura manualmente el ritmo de gasto de cada fuente.
 
-### Modelo: decay multiplicativo sobre el saldo remanente
+### Modelo: porcentaje sobre el saldo base
 
 Para cada obra del año target:
 
 ```
-saldo  = obra.saldoActual                        # = creditoDef - gastadoYTD
+saldo_proyectable = obra.saldoActual × (1 − descuentoPct/100)
+restante = saldo_proyectable
 para cada mes futuro m (Mes Actual + 1 .. Diciembre):
-  pct   = pctMatrix[programa__segmento][m] / 100  # saturado entre 0 y 1
-  gasto = saldo × pct
-  proy[m] = gasto
-  saldo = max(0, saldo - gasto)                   # nunca negativo
+  pct      = pctMatrix[programa__segmento][m] / 100    # saturado entre 0 y 1
+  gasto    = min(saldo_proyectable × pct, restante)    # % del saldo base, no del remanente
+  proy[m]  = gasto
+  restante = max(0, restante − gasto)
 
 TotalProyectado = Σ proy[m]
-SaldoFinal      = saldoActual - TotalProyectado
+SaldoFinal      = saldoActual − TotalProyectado
 ```
 
-- **Decay** porque cada mes el % se aplica sobre lo que **quedaba** (no sobre
-  el saldo original). Ej: con 10% uniforme cada mes, mayo gasta $100→$10
-  (queda $90), junio $90→$9 (queda $81), etc.
-- Si en algún mes ponés **100%**, ese mes consume todo lo que quedaba y los
-  meses siguientes dan automáticamente $0.
+- Si los porcentajes **suman exactamente 100%**, `TotalProyectado = saldo_proyectable`
+  (se consume el saldo entero).
+- Si suman menos del 100%, queda un remanente sin proyectar.
+- Si suman más del 100%, los meses del final se truncan al remanente disponible
+  (los primeros meses tienen prioridad).
 - El cálculo se hace **al apretar Exportar** — no se guarda en la DB.
 
 ### UI del modal
@@ -348,6 +349,24 @@ SaldoFinal      = saldoActual - TotalProyectado
 | Saldo Final | Saldo Actual − Total Proyectado |
 
 Las 4 hojas previas (Resumen, Plan, Esperado, Real) se mantienen sin cambios.
+
+### Hoja "Por Fuente" en el .xlsx
+
+Resumen agregado por fuente de financiamiento. Mismas columnas que "Obras" pero
+sin identificación individual (sin Expediente/PRY/CUOV/Concepto): una fila por
+fuente (programa+segmento) con la **suma** de todas sus obras.
+
+| Columna | Significado |
+|---|---|
+| Programa, Segmento | Identificación de la fuente |
+| Crédito Definitivo | Suma del crédito de todas las obras |
+| Gastado YTD | Suma del gastado acumulado |
+| Saldo Actual | Suma de los saldos actuales |
+| Descuento % | % de descuento configurado para la fuente |
+| Saldo Proyectable | Suma del saldo proyectable (post-descuento) |
+| `<mes> proy.` × N | Suma de los gastos proyectados por mes |
+| Total Proyectado | Σ de las columnas mensuales |
+| Saldo Final | Suma de Saldo Actual − Total Proyectado |
 
 ---
 

@@ -153,6 +153,61 @@ export function buildExportXlsx(
   const wsObras = XLSX.utils.aoa_to_sheet(obrasAOA);
   XLSX.utils.book_append_sheet(wb, wsObras, "Obras");
 
+  // Hoja 6 — Resumen por fuente de financiamiento
+  type FuenteEntry = {
+    programName: string; segment: string; descuentoPct: number;
+    creditoDefinitivo: number; gastadoYTD: number; saldoActual: number;
+    saldoProyectable: number; proyMonths: number[];
+    totalProyectado: number; saldoFinal: number;
+  };
+  const fuenteMap = new Map<string, FuenteEntry>();
+  for (const o of opts.obrasRows) {
+    const key = o.programSlug + "__" + o.segment;
+    if (!fuenteMap.has(key)) {
+      fuenteMap.set(key, {
+        programName: o.programName,
+        segment: o.segment,
+        descuentoPct: o.descuentoPct,
+        creditoDefinitivo: 0,
+        gastadoYTD: 0,
+        saldoActual: 0,
+        saldoProyectable: 0,
+        proyMonths: new Array(12).fill(0),
+        totalProyectado: 0,
+        saldoFinal: 0,
+      });
+    }
+    const entry = fuenteMap.get(key)!;
+    entry.creditoDefinitivo += o.creditoDefinitivo;
+    entry.gastadoYTD += o.gastadoYTD;
+    entry.saldoActual += o.saldoActual;
+    entry.saldoProyectable += o.saldoProyectable;
+    for (let i = 0; i < 12; i++) entry.proyMonths[i] = (entry.proyMonths[i] ?? 0) + (o.proyMonths[i] ?? 0);
+    entry.totalProyectado += o.totalProyectado;
+    entry.saldoFinal += o.saldoFinal;
+  }
+  const porFuenteAOA: (string | number)[][] = [[
+    "Programa", "Segmento", "Crédito Definitivo", "Gastado YTD",
+    "Saldo Actual", "Descuento %", "Saldo Proyectable",
+    ...futureMonthHeaders, "Total Proyectado", "Saldo Final",
+  ]];
+  for (const entry of fuenteMap.values()) {
+    porFuenteAOA.push([
+      entry.programName,
+      SEGMENT_LABEL[entry.segment] ?? entry.segment,
+      entry.creditoDefinitivo,
+      entry.gastadoYTD,
+      entry.saldoActual,
+      entry.descuentoPct,
+      entry.saldoProyectable,
+      ...entry.proyMonths.slice(opts.currentMonth),
+      entry.totalProyectado,
+      entry.saldoFinal,
+    ]);
+  }
+  const wsPorFuente = XLSX.utils.aoa_to_sheet(porFuenteAOA);
+  XLSX.utils.book_append_sheet(wb, wsPorFuente, "Por Fuente");
+
   const out = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
   return out as Buffer;
 }
